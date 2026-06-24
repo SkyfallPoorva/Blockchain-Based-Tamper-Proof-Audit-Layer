@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blockchain Audit System</title>
+
+    <style>
+        /* ===== GRADIENT BACKGROUND ===== */
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #b243e6, #003da0, #f4c713);
+            color: #333;
+        }
+        /* ===== BLOCKCHAIN CONNECTOR ===== */
+
+        .chain-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .block {
+            position: relative;
+            animation: fadeInUp 0.4s ease forwards;
+            width: 100%;
+            max-width: 500px;
+            text-align: left;
+        }
+
+        /* vertical line */
+        .block:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 100%;
+            width: 3px;
+            height: 40px;
+            background: linear-gradient(to bottom, #3b82f6, #9333ea);
+            animation: flow 1.5s infinite;
+        }
+
+        /* glowing dot */
+        .block:not(:last-child)::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: calc(100% + 15px);
+            width: 10px;
+            height: 10px;
+            background: #facc15;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #facc15;
+        }
+
+        /* animation */
+        @keyframes flow {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        /* Navbar */
+        .navbar {
+            background: #1e293b;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .navbar h2 { margin: 0; }
+
+        .navbar div {
+            position: absolute;
+            right: 30px;
+        }
+
+        .container {
+            padding: 30px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        /* Glass cards */
+        .card {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Inputs */
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        /* Buttons */
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        /* Status */
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #e0f2fe; color: #075985; }
+
+        /* Loader */
+        .loader {
+            border: 3px solid #eee;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 6px;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        #toast.show { opacity: 1; }
+
+        /* Operation Colors */
+        .upload { color: green; }
+        .update { color: orange; }
+        .delete { color: red; }
+
+        /* Dark mode */
+        .dark body {
+            background: linear-gradient(135deg, #592870, #293f63, #796b32);
+        }
+
+        .dark .card {
+            background: rgba(30,41,59,0.8);
+            color: white;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="navbar">
+    <h2>🔐 Blockchain Audit System</h2>
+    <div>
+        <button onclick="toggleDarkMode()">🌙</button>
+        <button onclick="connectWallet()">🔗 Connect Wallet</button>
+    </div>
+</div>
+
+<div id="walletInfo" style="padding:10px;color:white;"></div>
+
+<div class="container">
+
+    <div class="card">
+        <h3>📤 Upload / Update File</h3>
+        <input type="file" id="fileInput" />
+        <button onclick="uploadFile()">Upload / Update</button>
+    </div>
+
+    <div class="card">
+        <h3>🗑️ Delete File</h3>
+        <input type="text" id="deleteFileId" placeholder="Enter file ID" />
+        <button onclick="deleteFile()">Delete</button>
+    </div>
+
+    <div class="card">
+        <h3>📜 Get Logs</h3>
+        <input type="text" id="fileIdInput" placeholder="Enter file ID" />
+        <button onclick="getLogs()">Fetch Logs</button>
+    </div>
+
+    <div class="card">
+        <h3>🔍 Verify File Integrity</h3>
+        <input type="file" id="verifyFileInput" />
+        <button onclick="verifyFile()">Verify</button>
+    </div>
+
+    <div id="status" class="status info"></div>
+    <div id="output"></div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+
+<script>
+const contractAddress = "0x0f5F34F9e27d458fC9C86dd1a7822751349587fc" //0x1051cde69D4baed7fd83B30253713CC0C799639E";
+
+const abi = [
+  "function addLog(string, bytes32, bytes32, uint256, string, bytes)",
+  "function getFileLogs(string) view returns (tuple(string fileID, bytes32 fileHash, bytes32 previousHash, uint256 version, uint256 timestamp, string operationType, address user, bytes signature)[])"
+];
+
+let provider, signer, contract;
+
+/* ===== STATUS + LOADER ===== */
+function setStatus(msg) {
+    let cls = "info";
+    if (msg.includes("⏳")) msg = `<span class="loader"></span> Processing...`;
+    if (msg.includes("✅")) cls = "success";
+    else if (msg.includes("❌")) cls = "error";
+
+    const el = document.getElementById("status");
+    el.className = "status " + cls;
+    el.innerHTML = msg;
+
+    showToast(msg.replace(/<[^>]*>?/gm, ''));
+}
+
+/* ===== TOAST ===== */
+function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
+/* ===== DARK MODE ===== */
+function toggleDarkMode() {
+    document.documentElement.classList.toggle("dark");
+}
+
+/* ===== CONNECT WALLET ===== */
+async function connectWallet() {
+    if (!window.ethereum) return alert("MetaMask not installed!");
+
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    contract = new ethers.Contract(contractAddress, abi, signer);
+
+    const address = await signer.getAddress();
+    document.getElementById("walletInfo").innerHTML =
+        `Connected: ${address.slice(0,6)}...${address.slice(-4)}`;
+
+    setStatus("✅ Wallet Connected");
+}
+
+/* ===== KEEP ALL ORIGINAL LOGIC BELOW ===== */
+
+/* HASH */
+async function getHash(file) {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return "0x" + hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/* SIGN */
+async function signHash(hash) {
+    return await signer.signMessage(ethers.getBytes(hash));
+}
+
+/* UPLOAD */
+async function uploadFile() {
+    if (!contract) return alert("Connect wallet first");
+
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) return alert("Select file");
+
+    setStatus("⏳ Processing...");
+
+    const fileID = file.name;
+    const hash = await getHash(file);
+
+    try {
+        let logs = [];
+        try { logs = await contract.getFileLogs(fileID); } catch {}
+
+        const version = logs.length + 1;
+        const previousHash = logs.length > 0
+            ? logs[logs.length - 1].fileHash
+            : "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+        const operationType = version === 1 ? "UPLOAD" : "UPDATE";
+
+        const signature = await signHash(hash);
+
+        const tx = await contract.addLog(
+            fileID,
+            hash,
+            previousHash,
+            version,
+            operationType,
+            signature
+        );
+
+        await tx.wait();
+
+        setStatus(`✅ ${operationType} Success (Version ${version})`);
+
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Failed");
+    }
+}
+
+/* DELETE */
+async function deleteFile() {
+    if (!contract) return alert("Connect wallet first");
+
+    const fileID = document.getElementById("deleteFileId").value;
+    if (!fileID) return alert("Enter file ID");
+
+    setStatus("⏳ Processing...");
+
+    try {
+        const logs = await contract.getFileLogs(fileID);
+        if (logs.length === 0) return alert("No file found");
+
+        const last = logs[logs.length - 1];
+        const version = logs.length + 1;
+
+        const signature = await signHash(last.fileHash);
+
+        const tx = await contract.addLog(
+            fileID,
+            last.fileHash,
+            last.fileHash,
+            version,
+            "DELETE",
+            signature
+        );
+
+        await tx.wait();
+
+        setStatus(`🗑️ DELETE Success (Version ${version})`);
+
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Delete Failed");
+    }
+}
+
+/* GET LOGS → BLOCK VIEW */
+async function getLogs() {
+    if (!contract) return alert("Connect wallet first");
+
+    const fileID = document.getElementById("fileIdInput").value;
+    if (!fileID) return alert("Enter file ID");
+
+    try {
+        const logs = await contract.getFileLogs(fileID);
+
+        let chainValid = true;
+        let view = `<div class="chain-container">`;
+
+        for (let i = 0; i < logs.length; i++) {
+            const log = logs[i];
+        
+            if (i > 0 && log.previousHash !== logs[i - 1].fileHash) {
+                chainValid = false;
+            }
+        
+            let cls = log.operationType.toLowerCase();
+        
+            view += `
+            <div class="card block">
+                <h4>⛓ Block ${log.version}</h4>
+                <p><strong>Operation:</strong> <span class="${cls}">${log.operationType}</span></p>
+                <p><strong>User:</strong> ${log.user}</p>
+                <p><strong>Time:</strong> ${new Date(Number(log.timestamp) * 1000)}</p>
+            </div>
+            `;
+        }
+
+        view += `</div>`;
+        view += `<h3>Chain Integrity: ${chainValid ? "✅ VALID" : "❌ BROKEN"}</h3>`;
+
+        document.getElementById("output").innerHTML = view;
+
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Error fetching logs");
+    }
+}
+
+/* VERIFY FILE */
+async function verifyFile() {
+    if (!contract) return alert("Connect wallet first");
+
+    const file = document.getElementById("verifyFileInput").files[0];
+    if (!file) return alert("Select file");
+
+    const fileID = file.name;
+    const currentHash = await getHash(file);
+
+    try {
+        const logs = await contract.getFileLogs(fileID);
+        if (logs.length === 0) return setStatus("❌ No record found");
+
+        const latestHash = logs[logs.length - 1].fileHash;
+
+        if (currentHash === latestHash) {
+            setStatus("✅ File AUTHENTIC");
+        } else {
+            setStatus("❌ File TAMPERED");
+        }
+
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Verification failed");
+    }
+}
+</script>
+
+</body>
+</html>
