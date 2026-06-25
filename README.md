@@ -168,8 +168,8 @@ The system was evaluated through:
 
 ## Contributors
 
-* Garima Sahu
 * Poorva Verma
+* Garima Sahu
 
 Guided by:
 Dr. Nachiket Tapas
